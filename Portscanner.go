@@ -1,16 +1,19 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"strconv"
 	"sync"
 )
 
 func main() {
-	address, err := ValidateUrl(os.Args[1])
+	addressInput := flag.String("address", "scanme.nmap.org", "The address you want to search")
+	flag.Parse()
+	address, err := ValidateUrl(*addressInput)
+
 	if err != nil {
 		fmt.Printf(err.Error())
 		return
@@ -18,6 +21,7 @@ func main() {
 	waitgroup := new(sync.WaitGroup)
 	waitgroup.Add(1024)
 	for i := 1; i <= 1024; i++ {
+
 		go PortScan(i, waitgroup, address+":"+strconv.Itoa(i))
 	}
 	waitgroup.Wait()
@@ -26,7 +30,6 @@ func PortScan(port int, waitgroup *sync.WaitGroup, address string) {
 	defer waitgroup.Done()
 	_, err := net.Dial("tcp", address)
 	if err != nil {
-		fmt.Printf("error occured:%d\n", port)
 		return
 	}
 	fmt.Printf("Port Open: %d\n", port)
